@@ -12,6 +12,8 @@ uvicorn app.main:app --reload
 pre-commit install --hook-type pre-push
 ```
 
+Проверить работу API http://127.0.0.1:8000/docs
+
 ## Ритуал перед PR
 ```bash
 ruff --fix .
@@ -39,6 +41,12 @@ docker compose up --build
 ```
 
 ## Эндпойнты
+- `GET /wishes/` → `[WishResponse, ...]` — получить все желания с фильтрацией по цене (`max_price`)
+- `GET /wishes/search?query=...` → `[WishResponse, ...]` — поиск желаний по названию
+- `POST /wishes/` → `WishResponse` — создать новое желание
+- `PUT /wishes/{wish_id}` → `WishResponse` — обновить существующее желание
+- `DELETE /wishes/{wish_id}` → `{"message": "Желание удалено"}` — удалить желание
+---
 - `GET /health` → `{"status": "ok"}`
 - `POST /items?name=...` — демо-сущность
 - `GET /items/{id}`

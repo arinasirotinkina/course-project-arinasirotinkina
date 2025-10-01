@@ -9,6 +9,7 @@ source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt -r requirements-dev.txt
 pre-commit install
 uvicorn app.main:app --reload
+pre-commit install --hook-type pre-push
 ```
 
 ## Ритуал перед PR

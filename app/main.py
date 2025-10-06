@@ -1,7 +1,16 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-app = FastAPI(title="SecDev Course App", version="0.1.0")
+from .wishes import router as wishes_router
+
+app = FastAPI(title="Wishlist API")
+
+app.include_router(wishes_router, prefix="/wishes", tags=["wishes"])
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Wishlist API is running"}
 
 
 class ApiError(Exception):

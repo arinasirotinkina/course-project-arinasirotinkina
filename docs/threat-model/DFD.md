@@ -29,4 +29,3 @@ F6 : proxy / edge to service
 F7 : service to storage
 
 F8 : telemetry flows
-

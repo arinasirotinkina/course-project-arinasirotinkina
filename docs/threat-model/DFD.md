@@ -4,32 +4,29 @@
 
 ```mermaid
 flowchart LR
-  %% External actors
-  A[User (Browser / Mobile)] -->|F1: HTTPS GET /wishes| GW[API Gateway / LB]
-  A -->|F2: HTTPS GET /wishes/search| GW
-  A -->|F3: HTTPS POST /wishes| GW
-  A -->|F4: HTTPS PUT /wishes/{id}| GW
-  A -->|F5: HTTPS DELETE /wishes/{id}| GW
+  %% External actors (упрощённо, без фигурных скобок и слешей)
+  A[User] -->|F1 GET| GW[API Gateway]
+  A -->|F2 SEARCH| GW
+  A -->|F3 POST| GW
+  A -->|F4 PUT| GW
+  A -->|F5 DELETE| GW
 
-  subgraph Edge["Trust Boundary: Edge (client <-> edge)"]
-    style Edge stroke:#333,stroke-width:2px
-    GW -->|F6: Reverse proxy -> FastAPI| SVC[FastAPI Service (wishes)]
+  subgraph Edge["Trust Boundary: Edge"]
+    GW -->|F6 proxy to app| SVC[FastAPI Service]
   end
 
-  subgraph Core["Trust Boundary: Core (app logic)"]
-    style Core stroke:#333,stroke-width:2px
-    SVC -->|F7: Read/Write (in-memory) / planned DB| DB[(Database / Persistence)]
-    SVC -->|F8: Metrics / Logging -> Monitoring| MON[Prometheus / ELK]
+  subgraph Core["Trust Boundary: Core"]
+    SVC -->|F7 DB read/write| DB[(Database)]
+    SVC -->|F8 metrics/logs| MON[Monitoring]
   end
-
-  %% Notes
-  classDef ext fill:#f9f,stroke:#333;
-  class A ext;
-
-  %% Legend
-  %% F1..F5 : client API flows
-  %% F6 : proxy / edge to service
-  %% F7 : service to storage
-  %% F8 : telemetry flows
 
 ```
+
+F1..F5 : client API flows
+
+F6 : proxy / edge to service
+
+F7 : service to storage
+
+F8 : telemetry flows
+

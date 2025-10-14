@@ -16,3 +16,7 @@
 | R10 | Неправильные конфигурации в проде | Infra, NFR-03,NFR-06 | 2 | 5 | 10 | Снизить | @arinasirotinkina | 2025-10-18 | Policy-as-code + CI gating |
 | R11 | Низкое покрытие тестами | Codebase, NFR-10 | 2 | 4 | 8 | Снизить | @arinasirotinkina | 2025-10-30 | Unit coverage ≥80% в CI |
 | R12 | Отсутствие мониторинга/алёртов | MON, NFR-03,NFR-04 | 3 | 4 | 12 | Снизить | @arinasirotinkina | 2025-10-22 | Dashboards и Alertmanager настроены |
+
+## Приоритеты и quick wins
+- **Срочно (High risk / high impact):** R2 (in-memory → DB + бэкап), R3 (auth), R9 (backup шифрование).
+- **quick wins:** unified error handler (R6), pydantic strict validation (R4), rate limiting middleware (R1,R5).

@@ -7,3 +7,19 @@ exclude = ["venv",".venv","build","dist"]
 [tool.isort]
 profile = "black"
 line_length = 100
+
+[tool.pytest.ini_options]
+addopts = """
+--cov=app \
+--cov-report=term-missing \
+--cov-fail-under=80 \
+--strict-markers \
+--disable-warnings
+"""
+testpaths = ["tests"]
+
+markers = [
+    "integration: marks tests as integration (slow, use real services)",
+    "unit: marks tests as fast unit tests",
+    "security: marks tests related to security checks",
+]

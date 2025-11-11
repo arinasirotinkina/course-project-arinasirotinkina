@@ -31,8 +31,13 @@ jobs:
           black --check .
           isort --check-only .
 
-      - name: Tests
-        run: pytest -q
+      - name: Type check (mypy)
+        run: |
+          mypy app --strict
+
+      - name: Run tests with coverage (Quality Gate)
+        run: |
+          pytest --cov=app --cov-report=term-missing --cov-fail-under=80 -q
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files

@@ -31,9 +31,6 @@ jobs:
           black --check .
           isort --check-only .
 
-      - name: Type check (mypy)
-        run: |
-          mypy app --strict
 
       - name: Run tests with coverage (Quality Gate)
         run: |

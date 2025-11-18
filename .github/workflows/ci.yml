@@ -52,14 +52,17 @@ jobs:
       - name: Run tests with coverage (Quality Gate)
         run: |
           mkdir -p reports
-          coverage run -m pytest \
+          pytest \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml \
             --junitxml=reports/junit.xml \
             --disable-warnings \
             --maxfail=1 \
             -q
 
           coverage report --fail-under=80
-          coverage xml -o reports/coverage.xml
+
 
       - name: Upload reports
         if: always()

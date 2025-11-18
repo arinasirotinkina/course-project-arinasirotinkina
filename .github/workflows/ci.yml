@@ -1,26 +1,22 @@
-name: CI/CD Minimal
+name: CI
 
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    name: Tests & Lint (matrix)
+    name: Tests + Lint + Reports
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12"]
 
     steps:
       - name: Checkout
@@ -29,30 +25,31 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
+          cache: "pip"
 
       - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.python-version }}-pip-
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || true
-          pip install -r requirements-dev.txt || true
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           pip install ruff black isort pytest coverage
 
-      - name: Lint
+      - name: Lint & Format
         run: |
-          ruff check .
+          ruff check --output-format=github .
           black --check .
           isort --check-only .
 
-      - name: Run tests with coverage
+      - name: Run tests with coverage (Quality Gate)
         run: |
           mkdir -p reports
           coverage run -m pytest \
@@ -61,16 +58,21 @@ jobs:
             --maxfail=1 \
             -q
           coverage xml -o reports/coverage.xml
+          coverage report --fail-under=80
 
       - name: Upload reports
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: reports-${{ matrix.python-version }}
-          path: reports/
+          name: reports
+          path: reports/**
+
+      - name: Pre-commit (all files)
+        run: pre-commit run --all-files
+
 
   docker-build:
-    name: Build Docker image (project-level)
+    name: Docker Build
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -96,16 +98,17 @@ jobs:
         run: |
           docker build -t fastapi-app:ci .
 
-      - name: Save Docker image as artifact
+      - name: Save Docker image
         run: |
           mkdir -p docker_artifacts
           docker save fastapi-app:ci -o docker_artifacts/fastapi-image.tar
 
-      - name: Upload Docker artifact
+      - name: Upload docker artifact
         uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: docker_artifacts/fastapi-image.tar
+
 
   stage-deploy:
     name: Stage Deploy (mock)
@@ -118,12 +121,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Echo deploy (mock)
-        env:
-          STAGE_API_URL: ${{ secrets.STAGE_API_URL }}
-          STAGE_TOKEN: ${{ secrets.STAGE_TOKEN }}
+      - name: Echo deploy
         run: |
           echo "Pretending to deploy to staging..."
-          echo "Using STAGE_API_URL=$STAGE_API_URL"
-          echo "Using masked STAGE_TOKEN"
-          echo "Deploy completed (dry-run)"
+          echo "Deploy finished (dry-run)"

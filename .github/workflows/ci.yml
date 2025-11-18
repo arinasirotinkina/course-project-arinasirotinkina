@@ -52,12 +52,15 @@ jobs:
           black --check .
           isort --check-only .
 
-      - name: Run pytest
+      - name: Run tests with coverage
         run: |
           mkdir -p reports
-          coverage run -m pytest -q --disable-warnings --maxfail=1
+          coverage run -m pytest \
+            --junitxml=reports/junit.xml \
+            --disable-warnings \
+            --maxfail=1 \
+            -q
           coverage xml -o reports/coverage.xml
-          pytest -q --disable-warnings --junitxml=reports/junit.xml
 
       - name: Upload reports
         uses: actions/upload-artifact@v4

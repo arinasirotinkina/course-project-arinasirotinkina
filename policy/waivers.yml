@@ -1,0 +1,9 @@
+waivers:
+  - id: "EXAMPLE-CVE-PLACEHOLDER"
+    package: "example-lib"
+    version: "1.2.3"
+    severity: "High"
+    reason: "Транзитная зависимость, не используется в runtime."
+    issue: "https://github.com/<org>/<repo>/issues/123"
+    expires_at: "2025-12-31"
+    approved_by: "maintainer@example.org"

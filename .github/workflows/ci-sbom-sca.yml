@@ -1,0 +1,80 @@
+name: Security - SBOM & SCA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "**/*.py"
+      - "requirements*.txt"
+      - ".github/workflows/ci-sbom-sca.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SYFT_IMAGE: "anchore/syft:latest"
+  GRYPE_IMAGE: "anchore/grype:latest"
+  EVIDENCE_DIR: "EVIDENCE/P09"
+
+jobs:
+  sbom_sca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure evidence dir
+        run: |
+          mkdir -p ${{ env.EVIDENCE_DIR }}
+          touch ${{ env.EVIDENCE_DIR }}/.gitkeep
+
+      - name: Print versions (info)
+        run: |
+          echo "Syft image: $SYFT_IMAGE"
+          echo "Grype image: $GRYPE_IMAGE"
+
+      - name: Generate SBOM (Syft -> CycloneDX JSON)
+        run: |
+          set -e
+          docker run --rm -v "$PWD":/work -w /work $SYFT_IMAGE \
+            packages dir:. -o cyclonedx-json > "${{ env.EVIDENCE_DIR }}/sbom.json"
+          echo "SBOM written to ${{ env.EVIDENCE_DIR }}/sbom.json"
+        # Если вы хотите ПИНГОВАТЬ ТЕГ — замените SYFT_IMAGE на конкретный тег/digest в env
+
+      - name: Basic SBOM sanity
+        run: |
+          jq --version >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y jq
+          jq '.metadata' "${{ env.EVIDENCE_DIR }}/sbom.json" | head -n 20 || true
+
+      - name: SCA Scan (Grype) using SBOM
+        run: |
+          set -e
+          docker run --rm -v "$PWD":/work -w /work $GRYPE_IMAGE \
+            sbom:/work/${{ env.EVIDENCE_DIR }}/sbom.json -o json > "${{ env.EVIDENCE_DIR }}/sca_report.json"
+          echo "SCA report written to ${{ env.EVIDENCE_DIR }}/sca_report.json"
+
+      - name: Generate SCA summary (counts by severity)
+        run: |
+          jq --version >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y jq
+          echo "# SCA summary" > "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          echo "" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          echo "Generated: $(date --utc)" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          echo "" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          echo "## Counts by severity" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          jq '[.matches[].vulnerability.severity] | map(select(.!=null)) | group_by(.) | map({(.[0]): length}) | add' \
+            "${{ env.EVIDENCE_DIR }}/sca_report.json" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md" || echo "{}" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          echo "" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          echo "## Top findings (example)" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md"
+          jq '.matches | sort_by(.vulnerability.severity) | reverse | .[0:10] | .[] | {pkg: .artifact.name, version: .artifact.version, vuln: .vulnerability.id, severity: .vulnerability.severity, url: .vulnerability.data_source.url}' "${{ env.EVIDENCE_DIR }}/sca_report.json" >> "${{ env.EVIDENCE_DIR }}/sca_summary.md" || true
+
+      - name: Save evidence files as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P09_EVIDENCE
+          path: EVIDENCE/P09

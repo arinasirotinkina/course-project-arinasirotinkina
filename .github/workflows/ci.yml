@@ -74,6 +74,9 @@ jobs:
       - name: Pre-commit (all files)
         run: pre-commit run --all-files
 
+      - name: Create reports directory
+        run: mkdir -p reports
+
 
   docker-build:
     name: Docker Build

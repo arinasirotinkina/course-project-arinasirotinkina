@@ -18,6 +18,18 @@ logging.basicConfig(
 )
 
 
+# Middleware: security headers + cache-control
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+    response.headers.setdefault("Cache-Control", "no-cache, no-store, must-revalidate")
+    response.headers.setdefault("Pragma", "no-cache")
+    response.headers.setdefault("Expires", "0")
+    return response
+
+
 @app.get("/")
 def read_root():
     return {"message": "Wishlist API is running"}

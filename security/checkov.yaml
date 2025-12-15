@@ -1,0 +1,10 @@
+# Minimal checkov config for P12
+# See https://www.checkov.io/ for more options
+framework:
+  - kubernetes
+  - terraform
+quiet: false
+compact: true
+skip-check:
+  # add check ids to skip if they are irrelevant
+  # - CKV_K8S_9999

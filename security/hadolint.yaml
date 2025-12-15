@@ -1,0 +1,6 @@
+# Minimal hadolint config for course project P12
+ignored:
+  - DL3006  # Always prefer --mount=type=cache in buildkit context (skip for simplicity)
+  - DL3018  # pin python package versions in requirements (project-managed)
+
+# You can add more allowed/ignored rules per project needs

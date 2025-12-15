@@ -1,0 +1,35 @@
+rules:
+  - id: py-htmlresponse-any
+    languages: [python]
+    message: "Вызов HTMLResponse() — проверьте, не выводятся ли необработанные пользовательские данные"
+    severity: INFO
+    patterns:
+      - pattern: |
+          HTMLResponse($ARGS)
+    metadata:
+      category: security
+      cwe: "CWE-79"
+
+  - id: py-unsafe-html-echo
+    languages: [python]
+    message: "Потенциально небезопасный вывод пользовательских данных в HTMLResponse"
+    severity: WARNING
+    patterns:
+      - pattern: |
+          HTMLResponse(f"...{$X}...")
+    metadata:
+      category: security
+      cwe: "CWE-79: Cross-site Scripting"
+
+  - id: py-requests-no-timeout
+    languages: [python]
+    message: "Вызовы requests должны указывать timeout, чтобы избежать зависаний"
+    severity: INFO
+    patterns:
+      - pattern: |
+          requests.get($ARGS)
+      - pattern-not: |
+          requests.get($ARGS, timeout=$T)
+    metadata:
+      category: reliability
+      cwe: "CWE-400: Uncontrolled Resource Consumption"
